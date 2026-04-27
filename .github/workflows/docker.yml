@@ -53,5 +53,3 @@ jobs:
             CUDA_VERSION=13.2.1-cudnn-devel-ubuntu24.04
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max

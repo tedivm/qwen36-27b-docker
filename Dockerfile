@@ -7,11 +7,13 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         python3 \
         python3-venv \
         python3-pip \
+        python3-dev \
         curl \
         git \
-    && ln -sf /usr/bin/python3 /usr/bin/python \
-    && apt-get clean \
-    && rm -rf /var/lib/apt/lists/*
+        build-essential \
+        && ln -sf /usr/bin/python3 /usr/bin/python \
+        && apt-get clean \
+        && rm -rf /var/lib/apt/lists/*
 
 RUN python3 -m pip install --no-cache-dir --break-system-packages --ignore-installed pip wheel
 
