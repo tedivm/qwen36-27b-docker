@@ -90,7 +90,7 @@ case "$CMD" in
         echo "  Generation config  : ${GEN_CONFIG}"
         echo ""
 
-        exec vllm serve "$MODEL_DIR" \
+        vllm serve "$MODEL_DIR" \
             --served-model-name "$SERVED_MODEL_NAME" \
             --override-generation-config "$GEN_CONFIG" \
             --port "$PORT" \
@@ -110,7 +110,7 @@ case "$CMD" in
             --trust-remote-code \
             "${REASONING_PARSER_FLAG[@]}" \
             --speculative-config '{"method": "mtp", "num_speculative_tokens": 3}' \
-            >> "${LOG_DIR}/vllm.log" 2>&1
+            2>&1 | tee -a "${LOG_DIR}/vllm.log"
         ;;
 
     *)
