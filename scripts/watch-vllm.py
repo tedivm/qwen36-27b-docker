@@ -7,8 +7,7 @@ system python3, no venv needed.
 
   Usage: ./watch-vllm.py [LOG [WINDOW_SAMPLES]]
 
-  LOG             path to the server log (defaults to $LOG_DIR/vllm.log,
-                  reading LOG_DIR from config.env)
+   LOG             path to the server log (defaults to /data/logs/vllm.log)
   WINDOW_SAMPLES  rolling window size in samples (default: 12 = ~2 min)
 """
 import collections
@@ -21,21 +20,8 @@ import time
 
 
 def default_log_path() -> str:
-    """Read LOG_DIR from config.env (if present) and default to <LOG_DIR>/vllm.log."""
-    here = os.path.dirname(os.path.abspath(__file__))
-    cfg = os.path.join(here, "config.env")
-    log_dir = None
-    if os.path.isfile(cfg):
-        with open(cfg) as f:
-            for line in f:
-                m = re.match(r"\s*LOG_DIR\s*=\s*(.+?)\s*$", line)
-                if m:
-                    log_dir = m.group(1).strip().strip('"').strip("'")
-                    break
-    if not log_dir:
-        sys.stderr.write("No LOG_DIR in config.env — pass the log path explicitly.\n")
-        sys.exit(2)
-    return os.path.join(log_dir, "vllm.log")
+    model_dir = os.environ.get("MODEL_DIR", "/data/models")
+    return os.path.join(model_dir, ".tmp", "vllm.log")
 
 
 LOG = sys.argv[1] if len(sys.argv) > 1 else default_log_path()

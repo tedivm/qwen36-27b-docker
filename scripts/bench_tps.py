@@ -9,8 +9,8 @@ predict well. Use this to validate both perf and correctness after launch.
 
   Usage: ./bench_tps.py [base_url [model]]
 
-With no args, reads PORT + SERVED_MODEL_NAME from config.env and defaults to
-`http://localhost:$PORT/v1` and `$SERVED_MODEL_NAME`.
+With no args, reads PORT + SERVED_MODEL_NAME from environment variables and
+defaults to `http://localhost:1234/v1` and `qwen3.6-27b`.
 """
 import json
 import os
@@ -20,26 +20,12 @@ import time
 import urllib.request
 
 
-def read_config_env() -> dict:
-    here = os.path.dirname(os.path.abspath(__file__))
-    cfg = os.path.join(here, "config.env")
-    out = {}
-    if os.path.isfile(cfg):
-        with open(cfg) as f:
-            for line in f:
-                m = re.match(r"\s*([A-Z_]+)\s*=\s*(.+?)\s*$", line)
-                if m:
-                    out[m.group(1)] = m.group(2).strip().strip('"').strip("'")
-    return out
-
-
 if len(sys.argv) > 1 and sys.argv[1] in ("-h", "--help"):
     print(__doc__)
     sys.exit(0)
 
-cfg = read_config_env()
-default_port = cfg.get("PORT", "1234")
-default_model = cfg.get("SERVED_MODEL_NAME", "qwen3.6-27b")
+default_port = os.environ.get("PORT", "1234")
+default_model = os.environ.get("SERVED_MODEL_NAME", "qwen3.6-27b")
 
 base_url = (sys.argv[1] if len(sys.argv) > 1 else f"http://localhost:{default_port}/v1").rstrip("/")
 model = sys.argv[2] if len(sys.argv) > 2 else default_model

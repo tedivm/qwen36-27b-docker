@@ -1,0 +1,33 @@
+services:
+  qwen36:
+    image: ghcr.io/tedivm/qwen36-27b-docker:main
+    container_name: qwen36
+    runtime: nvidia
+    environment:
+      - HF_TOKEN=${HF_TOKEN}
+      - MODEL_DOWNLOAD=1
+      # Defaults from Dockerfile — uncomment to override:
+      # - PORT=1234
+      # - SERVED_MODEL_NAME=qwen36-27b
+      # - MAX_MODEL_LEN=200000
+      # - MAX_NUM_SEQS=3
+      # - GPU_MEMORY_UTIL=0.92
+      # - TEMPERATURE=0.6
+      # - TOP_P=0.95
+      # - TOP_K=20
+      # - MIN_P=0.0
+      # - PRESENCE_PENALTY=0
+      # - REPETITION_PENALTY=1.0
+      # - REASONING_PARSER=qwen3
+    volumes:
+      - ./models:/data/models
+      - ./logs:/data/logs
+    ports:
+      - "1234:1234"
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
