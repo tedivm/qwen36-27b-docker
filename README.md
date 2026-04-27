@@ -52,7 +52,7 @@ docker compose down
 docker build -t qwen36-vllm .
 
 # Or pull from GHCR
-docker pull ghcr.io/tedivm/qwen36-27b-docker:main
+docker pull ghcr.io/tedivm/qwen36-27b-docker:latest
 
 # Download model (one-time, stores in /path/on/host/models)
 docker run --rm --gpus all \
@@ -71,7 +71,7 @@ docker run -d --name qwen36 --gpus '"device=0"' -p 1234:1234 \
 
 # Upgrade (no redownload needed)
 docker stop qwen36 && docker rm qwen36
-docker pull ghcr.io/tedivm/qwen36-27b-docker:main
+docker pull ghcr.io/tedivm/qwen36-27b-docker:latest
 docker run -d --name qwen36 --gpus all -p 1234:1234 \
   -v /path/on/host/models:/data/models \
   qwen36-vllm

@@ -1,6 +1,6 @@
 services:
   qwen36:
-    image: ghcr.io/tedivm/qwen36-27b-docker:main
+    image: ghcr.io/tedivm/qwen36-27b-docker:latest
     container_name: qwen36
     runtime: nvidia
     environment:
