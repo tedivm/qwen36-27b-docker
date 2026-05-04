@@ -75,8 +75,16 @@ case "$CMD" in
         GEN_CONFIG="{\"temperature\": ${TEMPERATURE}, \"top_p\": ${TOP_P}, \"top_k\": ${TOP_K}, \"min_p\": ${MIN_P}, \"presence_penalty\": ${PRESENCE_PENALTY}, \"repetition_penalty\": ${REPETITION_PENALTY}}"
 
         # --- Optional reasoning parser --------------------------------------
-        REASONING_PARSER_FLAG=()
-        [[ -n "${REASONING_PARSER:-}" ]] && REASONING_PARSER_FLAG=(--reasoning-parser "$REASONING_PARSER")
+        REASONING_PARSER_FLAG=""
+        [[ -n "${REASONING_PARSER:-}" ]] && REASONING_PARSER_FLAG="--reasoning-parser ${REASONING_PARSER}"
+
+        # --- Optional OTel endpoints ----------------------------------------
+        OTEL_TRACES_FLAG=""
+        [[ -n "${OTEL_EXPORTER_OTLP_TRACES_ENDPOINT:-}" ]] && OTEL_TRACES_FLAG="--otlp-traces-endpoint ${OTEL_EXPORTER_OTLP_TRACES_ENDPOINT}"
+        OTEL_METRICS_FLAG=""
+        [[ -n "${OTEL_EXPORTER_OTLP_METRICS_ENDPOINT:-}" ]] && OTEL_METRICS_FLAG="--otlp-metrics-endpoint ${OTEL_EXPORTER_OTLP_METRICS_ENDPOINT}"
+        OTEL_LOGS_FLAG=""
+        [[ -n "${OTEL_EXPORTER_OTLP_LOGS_ENDPOINT:-}" ]] && OTEL_LOGS_FLAG="--otlp-logs-endpoint ${OTEL_EXPORTER_OTLP_LOGS_ENDPOINT}"
 
         echo "Starting vLLM server:"
         echo "  Model              : ${MODEL_DIR}"
@@ -108,7 +116,10 @@ case "$CMD" in
             --enable-auto-tool-choice \
             --tool-call-parser qwen3_coder \
             --trust-remote-code \
-            "${REASONING_PARSER_FLAG[@]}" \
+            ${REASONING_PARSER_FLAG} \
+            ${OTEL_TRACES_FLAG} \
+            ${OTEL_METRICS_FLAG} \
+            ${OTEL_LOGS_FLAG} \
             --speculative-config '{"method": "mtp", "num_speculative_tokens": 3}' \
             2>&1 | tee -a "${LOG_DIR}/vllm.log"
         ;;

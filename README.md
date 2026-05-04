@@ -99,6 +99,13 @@ All configuration is via environment variables with sensible defaults:
 | `REPETITION_PENALTY` | `1.0` | Repetition penalty |
 | `REASONING_PARSER` | `qwen3` | Reasoning parser (blank to disable) |
 | `HF_TOKEN` | *(empty)* | HuggingFace auth token for gated models |
+| `OTEL_EXPORTER_OTLP_TRACES_ENDPOINT` | *(empty)* | OTel traces endpoint (e.g. `grpc://otel-collector:4317`) |
+| `OTEL_EXPORTER_OTLP_METRICS_ENDPOINT` | *(empty)* | OTel metrics endpoint (e.g. `grpc://otel-collector:4317`) |
+| `OTEL_EXPORTER_OTLP_LOGS_ENDPOINT` | *(empty)* | OTel logs endpoint (e.g. `grpc://otel-collector:4317`) |
+| `OTEL_EXPORTER_OTLP_INSECURE` | *(empty)* | Set to `true` for plaintext gRPC (OTel SDK env, applies to all signals) |
+| `OTEL_EXPORTER_OTLP_TRACES_INSECURE` | *(empty)* | Traces-only plaintext override (OTel SDK env) |
+| `OTEL_EXPORTER_OTLP_METRICS_INSECURE` | *(empty)* | Metrics-only plaintext override (OTel SDK env) |
+| `OTEL_EXPORTER_OTLP_LOGS_INSECURE` | *(empty)* | Logs-only plaintext override (OTel SDK env) |
 
 ## Usage
 

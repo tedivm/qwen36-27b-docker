@@ -19,6 +19,12 @@ services:
       # - PRESENCE_PENALTY=0
       # - REPETITION_PENALTY=1.0
       # - REASONING_PARSER=qwen3
+      # OpenTelemetry — uncomment to enable tracing/metrics/logs:
+      # - OTEL_SERVICE_NAME=vllm-qwen36
+      # - OTEL_EXPORTER_OTLP_TRACES_ENDPOINT=grpc://192.168.4.108:4317
+      # - OTEL_EXPORTER_OTLP_METRICS_ENDPOINT=grpc://192.168.4.108:4317
+      # - OTEL_EXPORTER_OTLP_LOGS_ENDPOINT=grpc://192.168.4.108:4317
+      # - OTEL_EXPORTER_OTLP_INSECURE=true
     volumes:
       - ./models:/data/models
       - ./logs:/data/logs
