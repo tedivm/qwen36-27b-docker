@@ -114,7 +114,7 @@ case "$CMD" in
             --gpu-memory-utilization "$GPU_MEMORY_UTIL" \
             --disable-custom-all-reduce \
             --enable-auto-tool-choice \
-            --tool-call-parser qwen3_xml \
+            --tool-call-parser "$TOOL_CALL_PARSER" \
             --trust-remote-code \
             ${REASONING_PARSER_FLAG} \
             ${OTEL_TRACES_FLAG} \

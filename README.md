@@ -101,6 +101,7 @@ All configuration is via environment variables with sensible defaults:
 | `PRESENCE_PENALTY` | `0` | Presence penalty |
 | `REPETITION_PENALTY` | `1.0` | Repetition penalty |
 | `REASONING_PARSER` | `qwen3` | Reasoning parser (blank to disable) |
+| `TOOL_CALL_PARSER` | `qwen3_xml` | Tool call parser for OpenAI-style tool calls |
 | `HF_TOKEN` | *(empty)* | HuggingFace auth token for gated models |
 | `OTEL_EXPORTER_OTLP_TRACES_ENDPOINT` | *(empty)* | OTel traces endpoint (e.g. `grpc://otel-collector:4317`) |
 | `OTEL_EXPORTER_OTLP_METRICS_ENDPOINT` | *(empty)* | OTel metrics endpoint (e.g. `grpc://otel-collector:4317`) |
@@ -113,17 +114,20 @@ All configuration is via environment variables with sensible defaults:
 ## Usage
 
 **Monitor** (inside the container):
+
 ```bash
 docker exec -it qwen36 watch-vllm.py
 docker exec -it qwen36 watch-vllm.py /data/models/.tmp/vllm.log 24
 ```
 
 **Benchmark** (inside the container):
+
 ```bash
 docker exec -it qwen36 python bench_tps.py
 ```
 
 **OpenAI-compatible API**:
+
 ```bash
 curl http://localhost:1234/v1/chat/completions \
   -H "Authorization: Bearer any" \
@@ -144,13 +148,14 @@ curl http://localhost:1234/v1/chat/completions \
 | `--max-num-batched-tokens 8192` | Set via `MAX_NUM_BATCHED_TOKENS`; tune for throughput vs latency |
 | `--gpu-memory-utilization 0.92` | Leaves CUDA-graph margin |
 | `--disable-custom-all-reduce` | No NVLink — stock NCCL is faster |
-| `--tool-call-parser qwen3_coder` + `--enable-auto-tool-choice` | OpenAI-style tool calls |
+| `--tool-call-parser qwen3_xml` + `--enable-auto-tool-choice` | OpenAI-style tool calls (set via `TOOL_CALL_PARSER`) |
 | `--reasoning-parser qwen3` | Enables extended thinking output |
 
 TP=2 beats TP=1 by ~1.5x on dual 3090s. Memory-bandwidth savings from splitting weights across two cards outweigh the PCIe NCCL all-reduce cost.
 
 ## Caveats
 
+- **opencode users: use `TOOL_CALL_PARSER=qwen3_coder`** instead of the default `qwen3_xml` due to [an opencode bug](https://github.com/anomalyco/opencode/issues/26412) that breaks tool call parsing with `qwen3_xml`.
 - **Mamba prefix caching is experimental** for Qwen3.6. vLLM auto-picks the `align` fallback mode for `Qwen3_5ForConditionalGeneration`. Regular-attention layers cache fine (~85% hit rate); Mamba/GDN linear-attention layers re-run prefill on every new request.
 - **Spec-decode silently ignores** `min_p` and `logit_bias` per-request params.
 - **Deprecation warnings about `Qwen2VLImageProcessorFast` / `use_fast`** are upstream-transformers noise; ignore.
