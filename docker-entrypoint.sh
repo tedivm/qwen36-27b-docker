@@ -102,25 +102,25 @@ case "$CMD" in
             --served-model-name "$SERVED_MODEL_NAME" \
             --override-generation-config "$GEN_CONFIG" \
             --port "$PORT" \
-            --dtype float16 \
+            --dtype half \
             --quantization auto_round \
-            --kv-cache-dtype fp8 \
+            --kv-cache-dtype "$KV_CACHE_DTYPE" \
             --enable-prefix-caching \
             --enable-chunked-prefill \
             --tensor-parallel-size "$TENSOR_PARALLEL" \
             --max-model-len "$MAX_MODEL_LEN" \
             --max-num-seqs "$MAX_NUM_SEQS" \
-            --max-num-batched-tokens 4128 \
+            --max-num-batched-tokens "$MAX_NUM_BATCHED_TOKENS" \
             --gpu-memory-utilization "$GPU_MEMORY_UTIL" \
             --disable-custom-all-reduce \
             --enable-auto-tool-choice \
-            --tool-call-parser qwen3_coder \
+            --tool-call-parser qwen3_xml \
             --trust-remote-code \
             ${REASONING_PARSER_FLAG} \
             ${OTEL_TRACES_FLAG} \
             ${OTEL_METRICS_FLAG} \
             ${OTEL_LOGS_FLAG} \
-            --speculative-config '{"method": "mtp", "num_speculative_tokens": 3}' \
+            --speculative-config "{\"method\": \"mtp\", \"num_speculative_tokens\": ${NUM_SPECULATIVE_TOKENS}}" \
             2>&1 | tee -a "${LOG_DIR}/vllm.log"
         ;;
 

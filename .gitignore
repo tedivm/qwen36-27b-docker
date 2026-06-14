@@ -4,3 +4,4 @@ logs/
 __pycache__/
 *.pyc
 .venv*/
+.agents/skills/syncing-to-remote/SKILL.md

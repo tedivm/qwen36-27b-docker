@@ -89,7 +89,10 @@ All configuration is via environment variables with sensible defaults:
 | `SERVED_MODEL_NAME` | `qwen3.6-27b` | Model name for API |
 | `MAX_MODEL_LEN` | `200000` | Max context length (auto-lowered to 48000 for single GPU) |
 | `MAX_NUM_SEQS` | `3` | Concurrent sequences |
+| `MAX_NUM_BATCHED_TOKENS` | `8192` | Max tokens batched per step |
 | `GPU_MEMORY_UTIL` | `0.92` | GPU memory fraction (auto-set to 0.95 for single GPU) |
+| `NUM_SPECULATIVE_TOKENS` | `3` | MTP speculative decoding tokens |
+| `KV_CACHE_DTYPE` | `fp8` | KV cache precision |
 | `TENSOR_PARALLEL` | *(auto)* | Tensor parallelism (auto-detected from GPU count) |
 | `TEMPERATURE` | `0.6` | Generation temperature |
 | `TOP_P` | `0.95` | Nucleus sampling threshold |
@@ -133,12 +136,12 @@ curl http://localhost:1234/v1/chat/completions \
 | Flag | Why |
 |---|---|
 | `--quantization auto_round` | Matches the Lorbus weights |
-| `--kv-cache-dtype fp8` | Halves KV memory vs FP16; 200K x 3 seqs fits on 48 GB |
+| `--kv-cache-dtype fp8` | Halves KV memory vs FP16; 200K x 3 seqs fits on 48 GB (set via `KV_CACHE_DTYPE`) |
 | `--enable-prefix-caching` | Not default for Qwen3.6 hybrid attention; opt in |
 | `--enable-chunked-prefill` | Recommended alongside spec-decode for throughput |
-| `--speculative-config method=mtp, num_speculative_tokens=3` | ~2x throughput on code; 3 is the sweet spot |
+| `--speculative-config method=mtp, num_speculative_tokens=3` | ~2x throughput on code; 3 is the sweet spot (set via `NUM_SPECULATIVE_TOKENS`) |
 | `--max-num-seqs 3` | Solo user + subagents; raise for more concurrency |
-| `--max-num-batched-tokens 4128` | Matches vLLM's CUDA-graph compile range endpoint |
+| `--max-num-batched-tokens 8192` | Set via `MAX_NUM_BATCHED_TOKENS`; tune for throughput vs latency |
 | `--gpu-memory-utilization 0.92` | Leaves CUDA-graph margin |
 | `--disable-custom-all-reduce` | No NVLink — stock NCCL is faster |
 | `--tool-call-parser qwen3_coder` + `--enable-auto-tool-choice` | OpenAI-style tool calls |

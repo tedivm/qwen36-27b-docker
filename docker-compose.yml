@@ -1,17 +1,24 @@
 services:
   qwen36:
-    image: ghcr.io/tedivm/qwen36-27b-docker:latest
+    # Uncomment to use prebuilt image.
+    #image: ghcr.io/tedivm/qwen36-27b-docker:latest
+    build:
+      context: .
     container_name: qwen36
     runtime: nvidia
     environment:
       - HF_TOKEN=${HF_TOKEN}
       - MODEL_DOWNLOAD=1
+      - HF_XET_HIGH_PERFORMANCE=1
       # Defaults from Dockerfile — uncomment to override:
       # - PORT=1234
       # - SERVED_MODEL_NAME=qwen36-27b
       # - MAX_MODEL_LEN=200000
       # - MAX_NUM_SEQS=3
+      # - MAX_NUM_BATCHED_TOKENS=8192
       # - GPU_MEMORY_UTIL=0.92
+      # - NUM_SPECULATIVE_TOKENS=3
+      # - KV_CACHE_DTYPE=fp8
       # - TEMPERATURE=0.6
       # - TOP_P=0.95
       # - TOP_K=20

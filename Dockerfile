@@ -1,5 +1,8 @@
-ARG CUDA_VERSION=13.2.1-cudnn-devel-ubuntu24.04
+ARG CUDA_VERSION=13.3.0-cudnn-devel-ubuntu24.04
 FROM nvidia/cuda:${CUDA_VERSION}
+
+ARG VLLM_VERSION=0.23.0
+ENV VLLM_VERSION=${VLLM_VERSION}
 
 ENV DEBIAN_FRONTEND=noninteractive
 
@@ -18,8 +21,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 RUN python3 -m pip install --no-cache-dir --break-system-packages --ignore-installed pip wheel
 
 RUN python3 -m pip install --no-cache-dir --break-system-packages \
-        'vllm==0.19.1' \
-        auto-round \
+        "vllm==${VLLM_VERSION}" \
+        "fastapi<0.137" \
         hf_transfer \
         huggingface_hub
 
@@ -38,6 +41,9 @@ ENV PORT=1234
 ENV SERVED_MODEL_NAME=qwen3.6-27b
 ENV MAX_MODEL_LEN=200000
 ENV MAX_NUM_SEQS=3
+ENV MAX_NUM_BATCHED_TOKENS=8192
+ENV NUM_SPECULATIVE_TOKENS=3
+ENV KV_CACHE_DTYPE=fp8
 ENV GPU_MEMORY_UTIL=0.92
 ENV TEMPERATURE=0.6
 ENV TOP_P=0.95
@@ -46,6 +52,9 @@ ENV MIN_P=0.0
 ENV PRESENCE_PENALTY=0
 ENV REPETITION_PENALTY=1.0
 ENV REASONING_PARSER=qwen3
+ENV OTEL_EXPORTER_OTLP_TRACES_ENDPOINT=
+ENV OTEL_EXPORTER_OTLP_METRICS_ENDPOINT=
+ENV OTEL_EXPORTER_OTLP_LOGS_ENDPOINT=
 ENV MODEL_DOWNLOAD=0
 
 ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]

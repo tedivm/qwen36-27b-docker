@@ -12,6 +12,7 @@ predict well. Use this to validate both perf and correctness after launch.
 With no args, reads PORT + SERVED_MODEL_NAME from environment variables and
 defaults to `http://localhost:1234/v1` and `qwen3.6-27b`.
 """
+
 import json
 import os
 import re
@@ -27,7 +28,9 @@ if len(sys.argv) > 1 and sys.argv[1] in ("-h", "--help"):
 default_port = os.environ.get("PORT", "1234")
 default_model = os.environ.get("SERVED_MODEL_NAME", "qwen3.6-27b")
 
-base_url = (sys.argv[1] if len(sys.argv) > 1 else f"http://localhost:{default_port}/v1").rstrip("/")
+base_url = (
+    sys.argv[1] if len(sys.argv) > 1 else f"http://localhost:{default_port}/v1"
+).rstrip("/")
 model = sys.argv[2] if len(sys.argv) > 2 else default_model
 base_root = base_url[:-3] if base_url.endswith("/v1") else base_url
 print(f"target: {base_url}  model: {model}\n")
@@ -57,9 +60,9 @@ def scrape_spec(metrics_text: str) -> dict:
     Names vary across vLLM versions — we read whatever's present.
     """
     pats = {
-        "drafts":       r"^vllm:spec_decode_num_drafts\{[^}]*\}\s+([\d.]+)",
+        "drafts": r"^vllm:spec_decode_num_drafts\{[^}]*\}\s+([\d.]+)",
         "drafted_toks": r"^vllm:spec_decode_num_draft_tokens\{[^}]*\}\s+([\d.]+)",
-        "accepted":     r"^vllm:spec_decode_num_accepted_tokens\{[^}]*\}\s+([\d.]+)",
+        "accepted": r"^vllm:spec_decode_num_accepted_tokens\{[^}]*\}\s+([\d.]+)",
     }
     out = {}
     for k, p in pats.items():
@@ -78,13 +81,15 @@ def get_metrics() -> dict:
 
 
 def run(label: str, prompt: str, max_tokens: int = 800):
-    body = json.dumps({
-        "model": model,
-        "messages": [{"role": "user", "content": prompt}],
-        "max_tokens": max_tokens,
-        "temperature": 0.7,
-        "stream": False,
-    }).encode()
+    body = json.dumps(
+        {
+            "model": model,
+            "messages": [{"role": "user", "content": prompt}],
+            "max_tokens": max_tokens,
+            "temperature": 0.7,
+            "stream": False,
+        }
+    ).encode()
     pre = get_metrics()
     t0 = time.time()
     req = urllib.request.Request(
@@ -114,12 +119,13 @@ def run(label: str, prompt: str, max_tokens: int = 800):
         print(f"  spec cycles    : {int(ddrafts)}")
         print(f"  drafted toks   : {int(ddrafted)}")
         print(f"  accepted toks  : {int(daccepted)}")
-        print(f"  draft accept % : {accept_rate*100:.1f}%")
+        print(f"  draft accept % : {accept_rate * 100:.1f}%")
         print(f"  mean accept len: {mean_acc_len:.2f}")
     else:
         print("  (no spec-decode metric deltas — may be running without MTP, or")
         print("   /metrics uses different counter names in this vLLM version)")
-    print(f"  first 120 chars: {data['choices'][0]['message']['content'][:120]!r}")
+    content = data["choices"][0]["message"].get("content") or ""
+    print(f"  first 120 chars: {content[:120]!r}")
     print()
 
 
