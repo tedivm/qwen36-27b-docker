@@ -102,6 +102,7 @@ All configuration is via environment variables with sensible defaults:
 | `REPETITION_PENALTY` | `1.0` | Repetition penalty |
 | `REASONING_PARSER` | `qwen3` | Reasoning parser (blank to disable) |
 | `TOOL_CALL_PARSER` | `qwen3_xml` | Tool call parser for OpenAI-style tool calls |
+| `CHAT_TEMPLATE` | `/usr/local/bin/qwen3.6-enhanced.jinja` | Custom chat template for stable tool calling and interleaved thinking |
 | `HF_TOKEN` | *(empty)* | HuggingFace auth token for gated models |
 | `OTEL_EXPORTER_OTLP_TRACES_ENDPOINT` | *(empty)* | OTel traces endpoint (e.g. `grpc://otel-collector:4317`) |
 | `OTEL_EXPORTER_OTLP_METRICS_ENDPOINT` | *(empty)* | OTel metrics endpoint (e.g. `grpc://otel-collector:4317`) |
@@ -150,12 +151,13 @@ curl http://localhost:1234/v1/chat/completions \
 | `--disable-custom-all-reduce` | No NVLink — stock NCCL is faster |
 | `--tool-call-parser qwen3_xml` + `--enable-auto-tool-choice` | OpenAI-style tool calls (set via `TOOL_CALL_PARSER`) |
 | `--reasoning-parser qwen3` | Enables extended thinking output |
+| `--chat-template qwen3.6-enhanced.jinja` | M2.5-style interleaved thinking for stable tool calling (set via `CHAT_TEMPLATE`) |
 
 TP=2 beats TP=1 by ~1.5x on dual 3090s. Memory-bandwidth savings from splitting weights across two cards outweigh the PCIe NCCL all-reduce cost.
 
 ## Caveats
 
-- **opencode users: use `TOOL_CALL_PARSER=qwen3_coder`** instead of the default `qwen3_xml` due to [an opencode bug](https://github.com/anomalyco/opencode/issues/26412) that breaks tool call parsing with `qwen3_xml`.
+- **opencode users: set your provider to `anthropic`** instead of `openai` due to [an opencode bug](https://github.com/anomalyco/opencode/issues/26412) that breaks tool call parsing with the `qwen3_xml` parser format.
 - **Mamba prefix caching is experimental** for Qwen3.6. vLLM auto-picks the `align` fallback mode for `Qwen3_5ForConditionalGeneration`. Regular-attention layers cache fine (~85% hit rate); Mamba/GDN linear-attention layers re-run prefill on every new request.
 - **Spec-decode silently ignores** `min_p` and `logit_bias` per-request params.
 - **Deprecation warnings about `Qwen2VLImageProcessorFast` / `use_fast`** are upstream-transformers noise; ignore.
@@ -168,3 +170,4 @@ TP=2 beats TP=1 by ~1.5x on dual 3090s. Memory-bandwidth savings from splitting 
 - [Qwen team](https://github.com/QwenLM/Qwen3.6) — the base model and the MTP head.
 - Medium article ["An Overnight Stack for Qwen3.6-27B"](https://medium.com/@fzbcwvv/an-overnight-stack-for-qwen3-6-27b-85-tps-125k-context-vision-on-one-rtx-3090-0d95c6291914?postPublishedType=repub) — original source of the AutoRound + MTP + TurboQuant stack.
 - [Sandermage's Genesis patches](https://github.com/Sandermage/genesis-vllm-patches) — more aggressive approach with TurboQuant KV; useful reference for pushing further.
+- [allanchan339/vLLM-Qwen3-3.5-3.6-chat-template-fix](https://github.com/allanchan339/vLLM-Qwen3-3.5-3.6-chat-template-fix) — enhanced chat template with M2.5-style interleaved thinking for stable tool calling and reasoning in agentic workloads.

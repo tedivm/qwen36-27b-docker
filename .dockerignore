@@ -1,8 +1,11 @@
-config.env
-logs/
-*.log
-__pycache__/
-*.pyc
-.venv*/
-.venv
-*.egg-info/
+# Ignore everything by default
+*
+!.gitignore
+!README.md
+!LICENSE
+!Dockerfile
+!.dockerignore
+!docker-compose.yml
+!.env.example
+!config/
+!scripts/

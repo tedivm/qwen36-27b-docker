@@ -78,6 +78,10 @@ case "$CMD" in
         REASONING_PARSER_FLAG=""
         [[ -n "${REASONING_PARSER:-}" ]] && REASONING_PARSER_FLAG="--reasoning-parser ${REASONING_PARSER}"
 
+        # --- Chat template ---------------------------------------------------
+        CHAT_TEMPLATE_FLAG=""
+        [[ -n "${CHAT_TEMPLATE:-}" ]] && CHAT_TEMPLATE_FLAG="--chat-template ${CHAT_TEMPLATE}"
+
         # --- Optional OTel endpoints ----------------------------------------
         OTEL_TRACES_FLAG=""
         [[ -n "${OTEL_EXPORTER_OTLP_TRACES_ENDPOINT:-}" ]] && OTEL_TRACES_FLAG="--otlp-traces-endpoint ${OTEL_EXPORTER_OTLP_TRACES_ENDPOINT}"
@@ -117,6 +121,7 @@ case "$CMD" in
             --tool-call-parser "$TOOL_CALL_PARSER" \
             --trust-remote-code \
             ${REASONING_PARSER_FLAG} \
+            ${CHAT_TEMPLATE_FLAG} \
             ${OTEL_TRACES_FLAG} \
             ${OTEL_METRICS_FLAG} \
             ${OTEL_LOGS_FLAG} \

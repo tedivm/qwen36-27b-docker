@@ -27,6 +27,7 @@ services:
       # - REPETITION_PENALTY=1.0
       # - REASONING_PARSER=qwen3
       # - TOOL_CALL_PARSER=qwen3_xml
+      # - CHAT_TEMPLATE=/usr/local/bin/qwen3.6-enhanced.jinja
       # OpenTelemetry — uncomment to enable tracing/metrics/logs:
       # - OTEL_SERVICE_NAME=vllm-qwen36
       # - OTEL_EXPORTER_OTLP_TRACES_ENDPOINT=grpc://192.168.4.108:4317
