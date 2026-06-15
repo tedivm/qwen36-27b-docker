@@ -8,10 +8,14 @@ Forked from [k0zakinio/qwen36-vllm-setup](https://github.com/k0zakinio/qwen36-vl
 
 | Metric (dual RTX 3090, TP=2, 200K context) | Value |
 |---|---|
-| Sustained TPS on coding workloads | **~118** |
-| Sustained TPS on prose | ~89 |
+| Sustained TPS on coding workloads | **~124** |
+| Sustained TPS on prose | ~95 |
 | Max context length | 200,000 tokens (172K KV pool headroom) |
 | Vision support | yes (MoonViT, via `image_url` content parts) |
+
+The KV cache token size can can hit a total of 544,285 tokens. You can have one concurrent session with a max context length of 544,285, two concurrent sessions with a max context length of 272,142.
+
+I typically run with three concurrent sessions allowing for a max content length of 200,000 in each request, but if all three sessions take advantage of that then I will get an OOM error. In practice I have yet to see this occur.
 
 ### Verified benchmarks (2x RTX 3090, TP=2)
 
@@ -19,16 +23,23 @@ Measured with `bench_tps.py` against the Docker container:
 
 | Workload | Tokens | Time | TPS |
 |---|---|---|---|
-| Prose (800-word story) | 800 | 8.99s | **88.98** |
-| Code (LRU cache impl) | 1200 | 10.16s | **118.13** |
+| Prose (800-word story) | 800 | 8.38s | **95.00** |
+| Code (LRU cache impl) | 1200 | 9.68s | **124.00** |
 
-Dense model, not MoE — no tensor shuffling at token boundaries, clean TP=2 split. No NVLink required; PCIe TP is fine on this workload.
+**Power-limited (250W per GPU):**
+
+| Workload | Tokens | Time | TPS |
+|---|---|---|---|
+| Prose (800-word story) | 800 | 8.64s | **92.56** |
+| Code (LRU cache impl) | 1200 | 10.86s | **110.47** |
+
+Despite dropping from 700W to 500W (a 28% power drop), prose only sees a 2.5% drop while code sees a 10.9% drop in tokens per second.
 
 ## Hardware
 
 Tested on 2x RTX 3090 (48 GB VRAM total). Also works at lower context on a single 24 GB card. GPU count is auto-detected — pass `--gpus all` for multi-GPU or `--gpus '"device=0"'` for single-GPU.
 
-Minimum disk: ~20 GB for weights + ~6 GB for caches.
+Minimum disk: ~22 GB for weights + ~6 GB for caches.
 
 ## Quick start
 
@@ -89,7 +100,10 @@ All configuration is via environment variables with sensible defaults:
 | `SERVED_MODEL_NAME` | `qwen3.6-27b` | Model name for API |
 | `MAX_MODEL_LEN` | `200000` | Max context length (auto-lowered to 48000 for single GPU) |
 | `MAX_NUM_SEQS` | `3` | Concurrent sequences |
+| `MAX_NUM_BATCHED_TOKENS` | `8192` | Max tokens batched per step |
 | `GPU_MEMORY_UTIL` | `0.92` | GPU memory fraction (auto-set to 0.95 for single GPU) |
+| `NUM_SPECULATIVE_TOKENS` | `3` | MTP speculative decoding tokens |
+| `KV_CACHE_DTYPE` | `fp8` | KV cache precision |
 | `TENSOR_PARALLEL` | *(auto)* | Tensor parallelism (auto-detected from GPU count) |
 | `TEMPERATURE` | `0.6` | Generation temperature |
 | `TOP_P` | `0.95` | Nucleus sampling threshold |
@@ -98,6 +112,10 @@ All configuration is via environment variables with sensible defaults:
 | `PRESENCE_PENALTY` | `0` | Presence penalty |
 | `REPETITION_PENALTY` | `1.0` | Repetition penalty |
 | `REASONING_PARSER` | `qwen3` | Reasoning parser (blank to disable) |
+| `TOOL_CALL_PARSER` | `qwen3_xml` | Tool call parser for OpenAI-style tool calls |
+| `CHAT_TEMPLATE` | *(empty)* | Chat template (blank uses model default; set to `/usr/local/bin/qwen3.6-allanchan339.jinja` or `/usr/local/bin/qwen3.6-froggeric.jinja` for alternatives) |
+| `CHAT_TEMPLATE_PRESERVE_THINKING` | `true` | Preserve thinking tags in chat template kwargs |
+| `CHAT_TEMPLATE_ENABLE_THINKING` | `true` | Enable thinking in chat template kwargs |
 | `HF_TOKEN` | *(empty)* | HuggingFace auth token for gated models |
 | `OTEL_EXPORTER_OTLP_TRACES_ENDPOINT` | *(empty)* | OTel traces endpoint (e.g. `grpc://otel-collector:4317`) |
 | `OTEL_EXPORTER_OTLP_METRICS_ENDPOINT` | *(empty)* | OTel metrics endpoint (e.g. `grpc://otel-collector:4317`) |
@@ -110,17 +128,20 @@ All configuration is via environment variables with sensible defaults:
 ## Usage
 
 **Monitor** (inside the container):
+
 ```bash
 docker exec -it qwen36 watch-vllm.py
 docker exec -it qwen36 watch-vllm.py /data/models/.tmp/vllm.log 24
 ```
 
 **Benchmark** (inside the container):
+
 ```bash
 docker exec -it qwen36 python bench_tps.py
 ```
 
 **OpenAI-compatible API**:
+
 ```bash
 curl http://localhost:1234/v1/chat/completions \
   -H "Authorization: Bearer any" \
@@ -133,21 +154,24 @@ curl http://localhost:1234/v1/chat/completions \
 | Flag | Why |
 |---|---|
 | `--quantization auto_round` | Matches the Lorbus weights |
-| `--kv-cache-dtype fp8` | Halves KV memory vs FP16; 200K x 3 seqs fits on 48 GB |
+| `--kv-cache-dtype fp8` | Halves KV memory vs FP16; 200K x 3 seqs fits on 48 GB (set via `KV_CACHE_DTYPE`) |
 | `--enable-prefix-caching` | Not default for Qwen3.6 hybrid attention; opt in |
 | `--enable-chunked-prefill` | Recommended alongside spec-decode for throughput |
-| `--speculative-config method=mtp, num_speculative_tokens=3` | ~2x throughput on code; 3 is the sweet spot |
+| `--speculative-config method=mtp, num_speculative_tokens=3` | ~2x throughput on code; 3 is the sweet spot (set via `NUM_SPECULATIVE_TOKENS`) |
 | `--max-num-seqs 3` | Solo user + subagents; raise for more concurrency |
-| `--max-num-batched-tokens 4128` | Matches vLLM's CUDA-graph compile range endpoint |
+| `--max-num-batched-tokens 8192` | Set via `MAX_NUM_BATCHED_TOKENS`; tune for throughput vs latency |
 | `--gpu-memory-utilization 0.92` | Leaves CUDA-graph margin |
 | `--disable-custom-all-reduce` | No NVLink — stock NCCL is faster |
-| `--tool-call-parser qwen3_coder` + `--enable-auto-tool-choice` | OpenAI-style tool calls |
+| `--tool-call-parser qwen3_xml` + `--enable-auto-tool-choice` | OpenAI-style tool calls (set via `TOOL_CALL_PARSER`) |
 | `--reasoning-parser qwen3` | Enables extended thinking output |
+| `--chat-template` | Optional — set via `CHAT_TEMPLATE` to override model default (e.g. `qwen3.6-allanchan339.jinja`, `qwen3.6-froggeric.jinja`) |
+| `--default-chat-template-kwargs` | Set `preserve_thinking` and `enable_thinking` via `CHAT_TEMPLATE_PRESERVE_THINKING` and `CHAT_TEMPLATE_ENABLE_THINKING` |
 
 TP=2 beats TP=1 by ~1.5x on dual 3090s. Memory-bandwidth savings from splitting weights across two cards outweigh the PCIe NCCL all-reduce cost.
 
 ## Caveats
 
+- **opencode users: set your provider to `anthropic`** instead of `openai` due to [an opencode bug](https://github.com/anomalyco/opencode/issues/26412) that breaks tool call parsing with the `qwen3_xml` parser format.
 - **Mamba prefix caching is experimental** for Qwen3.6. vLLM auto-picks the `align` fallback mode for `Qwen3_5ForConditionalGeneration`. Regular-attention layers cache fine (~85% hit rate); Mamba/GDN linear-attention layers re-run prefill on every new request.
 - **Spec-decode silently ignores** `min_p` and `logit_bias` per-request params.
 - **Deprecation warnings about `Qwen2VLImageProcessorFast` / `use_fast`** are upstream-transformers noise; ignore.
@@ -160,3 +184,4 @@ TP=2 beats TP=1 by ~1.5x on dual 3090s. Memory-bandwidth savings from splitting 
 - [Qwen team](https://github.com/QwenLM/Qwen3.6) — the base model and the MTP head.
 - Medium article ["An Overnight Stack for Qwen3.6-27B"](https://medium.com/@fzbcwvv/an-overnight-stack-for-qwen3-6-27b-85-tps-125k-context-vision-on-one-rtx-3090-0d95c6291914?postPublishedType=repub) — original source of the AutoRound + MTP + TurboQuant stack.
 - [Sandermage's Genesis patches](https://github.com/Sandermage/genesis-vllm-patches) — more aggressive approach with TurboQuant KV; useful reference for pushing further.
+- [allanchan339/vLLM-Qwen3-3.5-3.6-chat-template-fix](https://github.com/allanchan339/vLLM-Qwen3-3.5-3.6-chat-template-fix) — enhanced chat template with M2.5-style interleaved thinking for stable tool calling and reasoning in agentic workloads.
