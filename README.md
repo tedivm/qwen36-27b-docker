@@ -8,10 +8,14 @@ Forked from [k0zakinio/qwen36-vllm-setup](https://github.com/k0zakinio/qwen36-vl
 
 | Metric (dual RTX 3090, TP=2, 200K context) | Value |
 |---|---|
-| Sustained TPS on coding workloads | **~118** |
-| Sustained TPS on prose | ~89 |
+| Sustained TPS on coding workloads | **~124** |
+| Sustained TPS on prose | ~95 |
 | Max context length | 200,000 tokens (172K KV pool headroom) |
 | Vision support | yes (MoonViT, via `image_url` content parts) |
+
+The KV cache token size can can hit a total of 544,285 tokens. You can have one concurrent session with a max context length of 544,285, two concurrent sessions with a max context length of 272,142.
+
+I typically run with three concurrent sessions allowing for a max content length of 200,000 in each request, but if all three sessions take advantage of that then I will get an OOM error. In practice I have yet to see this occur.
 
 ### Verified benchmarks (2x RTX 3090, TP=2)
 
@@ -19,8 +23,8 @@ Measured with `bench_tps.py` against the Docker container:
 
 | Workload | Tokens | Time | TPS |
 |---|---|---|---|
-| Prose (800-word story) | 800 | 8.99s | **88.98** |
-| Code (LRU cache impl) | 1200 | 10.16s | **118.13** |
+| Prose (800-word story) | 800 | 8.38s | **95.00** |
+| Code (LRU cache impl) | 1200 | 9.68s | **124.00** |
 
 Dense model, not MoE — no tensor shuffling at token boundaries, clean TP=2 split. No NVLink required; PCIe TP is fine on this workload.
 
@@ -28,7 +32,7 @@ Dense model, not MoE — no tensor shuffling at token boundaries, clean TP=2 spl
 
 Tested on 2x RTX 3090 (48 GB VRAM total). Also works at lower context on a single 24 GB card. GPU count is auto-detected — pass `--gpus all` for multi-GPU or `--gpus '"device=0"'` for single-GPU.
 
-Minimum disk: ~20 GB for weights + ~6 GB for caches.
+Minimum disk: ~22 GB for weights + ~6 GB for caches.
 
 ## Quick start
 
