@@ -83,7 +83,7 @@ case "$CMD" in
         [[ -n "${CHAT_TEMPLATE:-}" ]] && CHAT_TEMPLATE_FLAG="--chat-template ${CHAT_TEMPLATE}"
 
         # --- Chat template kwargs --------------------------------------------
-        CHAT_TEMPLATE_KWARGS_FLAG="--default-chat-template-kwargs \"{\"preserve_thinking\": ${CHAT_TEMPLATE_PRESERVE_THINKING}, \"enable_thinking\": ${CHAT_TEMPLATE_ENABLE_THINKING}}\""
+        CHAT_TEMPLATE_KWARGS_FLAG=(--default-chat-template-kwargs "{\"preserve_thinking\": ${CHAT_TEMPLATE_PRESERVE_THINKING}, \"enable_thinking\": ${CHAT_TEMPLATE_ENABLE_THINKING}}")
 
         # --- Optional OTel endpoints ----------------------------------------
         OTEL_TRACES_FLAG=""
@@ -125,7 +125,7 @@ case "$CMD" in
             --trust-remote-code \
             ${REASONING_PARSER_FLAG} \
             ${CHAT_TEMPLATE_FLAG} \
-            ${CHAT_TEMPLATE_KWARGS_FLAG} \
+            "${CHAT_TEMPLATE_KWARGS_FLAG[@]}" \
             ${OTEL_TRACES_FLAG} \
             ${OTEL_METRICS_FLAG} \
             ${OTEL_LOGS_FLAG} \
