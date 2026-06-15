@@ -113,7 +113,9 @@ All configuration is via environment variables with sensible defaults:
 | `REPETITION_PENALTY` | `1.0` | Repetition penalty |
 | `REASONING_PARSER` | `qwen3` | Reasoning parser (blank to disable) |
 | `TOOL_CALL_PARSER` | `qwen3_xml` | Tool call parser for OpenAI-style tool calls |
-| `CHAT_TEMPLATE` | `/usr/local/bin/qwen3.6-enhanced.jinja` | Custom chat template for stable tool calling and interleaved thinking |
+| `CHAT_TEMPLATE` | *(empty)* | Chat template (blank uses model default; set to `/usr/local/bin/qwen3.6-allanchan339.jinja` or `/usr/local/bin/qwen3.6-froggeric.jinja` for alternatives) |
+| `CHAT_TEMPLATE_PRESERVE_THINKING` | `true` | Preserve thinking tags in chat template kwargs |
+| `CHAT_TEMPLATE_ENABLE_THINKING` | `true` | Enable thinking in chat template kwargs |
 | `HF_TOKEN` | *(empty)* | HuggingFace auth token for gated models |
 | `OTEL_EXPORTER_OTLP_TRACES_ENDPOINT` | *(empty)* | OTel traces endpoint (e.g. `grpc://otel-collector:4317`) |
 | `OTEL_EXPORTER_OTLP_METRICS_ENDPOINT` | *(empty)* | OTel metrics endpoint (e.g. `grpc://otel-collector:4317`) |
@@ -162,7 +164,8 @@ curl http://localhost:1234/v1/chat/completions \
 | `--disable-custom-all-reduce` | No NVLink — stock NCCL is faster |
 | `--tool-call-parser qwen3_xml` + `--enable-auto-tool-choice` | OpenAI-style tool calls (set via `TOOL_CALL_PARSER`) |
 | `--reasoning-parser qwen3` | Enables extended thinking output |
-| `--chat-template qwen3.6-enhanced.jinja` | M2.5-style interleaved thinking for stable tool calling (set via `CHAT_TEMPLATE`) |
+| `--chat-template` | Optional — set via `CHAT_TEMPLATE` to override model default (e.g. `qwen3.6-allanchan339.jinja`, `qwen3.6-froggeric.jinja`) |
+| `--default-chat-template-kwargs` | Set `preserve_thinking` and `enable_thinking` via `CHAT_TEMPLATE_PRESERVE_THINKING` and `CHAT_TEMPLATE_ENABLE_THINKING` |
 
 TP=2 beats TP=1 by ~1.5x on dual 3090s. Memory-bandwidth savings from splitting weights across two cards outweigh the PCIe NCCL all-reduce cost.
 

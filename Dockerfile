@@ -31,7 +31,8 @@ RUN mkdir -p /data/models /data/logs
 COPY config/docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
 RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 
-COPY config/qwen3.6-enhanced.jinja /usr/local/bin/qwen3.6-enhanced.jinja
+COPY config/qwen3.6-allanchan339.jinja /usr/local/bin/qwen3.6-allanchan339.jinja
+COPY config/qwen3.6-froggeric.jinja /usr/local/bin/qwen3.6-froggeric.jinja
 
 COPY scripts/ /usr/local/bin/scripts/
 ENV PATH="/usr/local/bin/scripts:${PATH}"
@@ -55,7 +56,9 @@ ENV PRESENCE_PENALTY=0
 ENV REPETITION_PENALTY=1.0
 ENV REASONING_PARSER=qwen3
 ENV TOOL_CALL_PARSER=qwen3_xml
-ENV CHAT_TEMPLATE=/usr/local/bin/qwen3.6-enhanced.jinja
+ENV CHAT_TEMPLATE=
+ENV CHAT_TEMPLATE_PRESERVE_THINKING=true
+ENV CHAT_TEMPLATE_ENABLE_THINKING=true
 ENV OTEL_EXPORTER_OTLP_TRACES_ENDPOINT=
 ENV OTEL_EXPORTER_OTLP_METRICS_ENDPOINT=
 ENV OTEL_EXPORTER_OTLP_LOGS_ENDPOINT=
