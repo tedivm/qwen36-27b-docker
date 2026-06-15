@@ -26,6 +26,13 @@ Measured with `bench_tps.py` against the Docker container:
 | Prose (800-word story) | 800 | 8.38s | **95.00** |
 | Code (LRU cache impl) | 1200 | 9.68s | **124.00** |
 
+**Power-limited (250W per GPU):**
+
+| Workload | Tokens | Time | TPS |
+|---|---|---|---|
+| Prose (800-word story) | 800 | 8.64s | **92.56** |
+| Code (LRU cache impl) | 1200 | 10.86s | **110.47** |
+
 Dense model, not MoE — no tensor shuffling at token boundaries, clean TP=2 split. No NVLink required; PCIe TP is fine on this workload.
 
 ## Hardware
